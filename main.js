@@ -5,15 +5,18 @@ var topicRouter = require('./routes/topic.js');
 var authorRouter = require('./routes/author.js');
 var db = require('./lib/db.js');
 var bodyParser = require('body-parser');
+var compression = require('compression');
+var helmet = require('helmet');
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
+app.use(helmet());
 
 function throwError(error){ //에러가 발생하면 보여주는 함수
   if(error){
     throw error;
   }
 }
-
 //topic목록 불러오는 미들웨어
 app.get('*', function(request, response, next){
   db.query(`SELECT * FROM topic`, function(error, topics){
