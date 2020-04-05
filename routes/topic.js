@@ -86,25 +86,21 @@ router.post('/delete_process', function(request, response){
 router.get('/:pageID', function(request, response){
     db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id = ?`, [request.params.pageID], function(error, topic){
         throwError(error);
-        db.query(`SELECT * FROM topic`, function(error2, topics){
-          throwError(error2);
-          var sanitizedTitle = sanitizeHtml(topic[0].title);
-          var sanitizedDescription = sanitizeHtml(topic[0].description);
-          var sanitizedAuthorName = sanitizeHtml(topic[0].name);
-          var list = template.list(topics);
-          var body = `<h2>${sanitizedTitle}</h2>${sanitizedDescription} <p>by ${sanitizedAuthorName}</p>`;
-          var control = ` 
+        var sanitizedTitle = sanitizeHtml(topic[0].title);
+        var sanitizedDescription = sanitizeHtml(topic[0].description);
+        var sanitizedAuthorName = sanitizeHtml(topic[0].name);
+        var list = template.list(request.topics);
+        var body = `<h2>${sanitizedTitle}</h2>${sanitizedDescription} <p>by ${sanitizedAuthorName}</p>`;
+        var control = ` 
             <a href="/topic/create">create</a>
             <a href="/topic/update/${request.params.pageID}">update</a>
             <form action="/topic/delete_process" method="post">
-              <input type="hidden" name="id" value="${request.params.pageID}">
-              <input type="submit" value="delete">
+                <input type="hidden" name="id" value="${request.params.pageID}">
+                <input type="submit" value="delete">
             </form>
-          `;
-          var html = template.HTML(sanitizedTitle, list, body, control);
-          response.writeHead(200);
-          response.end(html);
-        });
+        `;
+        var html = template.HTML(sanitizedTitle, list, body, control);
+        response.send(html);
     });    
 });
 
