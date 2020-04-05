@@ -1,1 +1,4 @@
+//db정보는 버전관리하지 않음
 db.js
+//세션의 scret정보는 버전관리하지 않음
+session-start.js

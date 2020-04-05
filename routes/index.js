@@ -1,6 +1,5 @@
 var express = require('express');
-var router = express.Router();
-var db = require('../lib/db.js'); 
+var router = express.Router(); 
 var template = require('../lib/template.js');
 
 router.get('/', function(request, response){
@@ -9,7 +8,7 @@ router.get('/', function(request, response){
     var list = template.list(request.topics);
     var body = `<h2>${title}</h2>${description}`;
     var control = `<a href="/topic/create">create</a>`
-    var html = template.HTML(title, list, body, control);
+    var html = template.HTML(title, list, body, control, template.authStatusUI(request));
     response.send(html);
 });
 
