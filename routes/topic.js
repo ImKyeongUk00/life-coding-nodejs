@@ -2,16 +2,12 @@ var express = require('express');
 var router = express.Router();
 var db = require('../lib/db.js'); 
 var template = require('../lib/template.js');
+var auth = require('../lib/auth.js');
 var sanitizeHtml = require('sanitize-html');
-
-function throwError(error){ //에러가 발생하면 보여주는 함수
-    if(error){
-      throw error;
-    }
-}
+var errorControl = require('../lib/error.js');
 
 router.get('/create', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+    if(auth.is_login(request)){//로그인 상태라면
         var title = 'Create topic';
         var list = template.list(request.topics);
         var selectAuthor = template.selectAuthor(request.authors);
@@ -27,21 +23,21 @@ router.get('/create', function(request, response){
         </form>
         `;
         var control = '';
-        var html = template.HTML(title, list, body, control, template.authStatusUI(request));
+        var html = template.HTML(title, list, body, control, auth.statusUI(request));
         response.send(html);
     }else{
         response.redirect('/auth/login');
     }
 });
 
-router.post('/create_process', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+router.post('/create_process', function(request, response, next){
+    if(auth.is_login(request)){//로그인 상태라면
         var title = request.body.title;
         var description = request.body.description;
         var author_id = request.body.author_id;
         db.query(`INSERT INTO topic (title, description, created, author_id) VALUES (?, ?, NOW(), ?)`, [title, description, author_id], 
             function(error, results){
-            throwError(error);
+            errorControl.throw(error, next);
             response.redirect(`/topic/${results.insertId}`);
         });
     }else{
@@ -49,10 +45,10 @@ router.post('/create_process', function(request, response){
     }
 });
 
-router.get('/update/:pageID', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+router.get('/update/:pageID', function(request, response, next){
+    if(auth.is_login(request)){//로그인 상태라면
         db.query(`SELECT * FROM topic WHERE id = ?`, [request.params.pageID], function(error, topic){
-            throwError(error);
+            errorControl.throw(error, next);
             var title = topic[0].title;
             var list = template.list(request.topics);
             var control = `<a href="/create">create</a> <a href="/update?id=${request.params.pageID}">update</a>`;
@@ -69,7 +65,7 @@ router.get('/update/:pageID', function(request, response){
                     </p>
                 </form>
             `;
-            var html = template.HTML(title, list, body, control, template.authStatusUI(request));
+            var html = template.HTML(title, list, body, control, auth.statusUI(request));
             response.send(html);
         });
     }else{
@@ -77,13 +73,13 @@ router.get('/update/:pageID', function(request, response){
     }
 });
 
-router.post('/update_process', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+router.post('/update_process', function(request, response, next){
+    if(auth.is_login(request)){//로그인 상태라면
         var id = request.body.id;
         var title = request.body.title;
         var description = request.body.description;
         db.query(`UPDATE topic SET title=?, description=?, created=NOW() WHERE id = ?`, [title, description, id], function(error, result){
-            throwError(error);
+            errorControl.throw(error, next);
             response.redirect(`/topic/${id}`);
         });
     }else{
@@ -91,11 +87,11 @@ router.post('/update_process', function(request, response){
     }
 });
 
-router.post('/delete_process', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+router.post('/delete_process', function(request, response, next){
+    if(auth.is_login(request)){//로그인 상태라면
         var id = request.body.id;
         db.query(`DELETE FROM topic WHERE id=?`, [id], function(error, result){
-            throwError(error);
+            errorControl.throw(error, next);
             response.redirect('/');
         });
     }else{
@@ -103,10 +99,10 @@ router.post('/delete_process', function(request, response){
     }
 });
 
-router.get('/:pageID', function(request, response){
-    if(request.session.is_login === true){//로그인 상태라면
+router.get('/:pageID', function(request, response, next){
+    if(auth.is_login(request)){//로그인 상태라면
         db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id = ?`, [request.params.pageID], function(error, topic){
-            throwError(error);
+            errorControl.throw(error, next);
             var sanitizedTitle = sanitizeHtml(topic[0].title);
             var sanitizedDescription = sanitizeHtml(topic[0].description);
             var sanitizedAuthorName = sanitizeHtml(topic[0].name);
@@ -120,7 +116,7 @@ router.get('/:pageID', function(request, response){
                     <input type="submit" value="delete">
                 </form>
             `;
-            var html = template.HTML(sanitizedTitle, list, body, control, template.authStatusUI(request));
+            var html = template.HTML(sanitizedTitle, list, body, control, auth.statusUI(request));
             response.send(html);
         }); 
     }else{

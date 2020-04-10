@@ -9,48 +9,44 @@ var bodyParser = require('body-parser');
 var compression = require('compression');
 var helmet = require('helmet');
 var session = require('./lib/session-start');
-
+var passport = require('passport');
+var errorControl = require('./lib/error.js');
 
 //나의 앱에 필요한 써드파티 미들웨어
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
 app.use(helmet());
 
-//세션 시작
+//인증 관련 middle ware
 app.use(session);
+app.use(passport.initialize());//express에 passport를 설치
+app.use(passport.session());//passport가 내부적으로 session을 사용
 
-function throwError(error){ //에러가 발생하면 log로 보내주는 함수
-  if(error){
-    throw error;
-  }
-}
-
-//topic목록 불러오는 미들웨어
-app.get('*', function(request, response, next){
+//내가 만든 helper middle ware for my application 
+app.get('*', function(request, response, next){//topic목록 불러오는 미들웨어
   db.query(`SELECT * FROM topic`, function(error, topics){
-      throwError(error);
-      console.log(request.session);
+      errorControl.throw(error, next);
       request.topics = topics;
       next();
   });
 });
-//author목록 불러오는 미들웨어
-app.use(function(request, response, next){
+
+app.use(function(request, response, next){//author목록 불러오는 미들웨어
   db.query(`SELECT * FROM author`, function(error, authors){
-      throwError(error);
+      errorControl.throw(error, next);
       request.authors = authors;
       next();
   });
 });
 
 //router 불러오기
-app.use('/', indexRouter);
-app.use('/topic', topicRouter);
-app.use('/author', authorRouter);
-app.use('/auth', authRouter);
+app.use('/', indexRouter);//index page
+app.use('/topic', topicRouter);//topic page
+app.use('/author', authorRouter);// author page
+app.use('/auth', authRouter);// auth page
 
 //error control
-app.use(function(err, request, response, next) {//
+app.use(function(err, request, response, next) {//500
   console.error(err.stack);
   response.status(500).send('Something broke!');
 });
@@ -62,3 +58,5 @@ app.use(function(request, response, next) { //404
 app.listen(3000, function(){
   console.log(`Example app listening at http://localhost:3000`);
 });
+
+module.exports = app;
