@@ -58,5 +58,3 @@ app.use(function(request, response, next) { //404
 app.listen(3000, function(){
   console.log(`Example app listening at http://localhost:3000`);
 });
-
-module.exports = app;
