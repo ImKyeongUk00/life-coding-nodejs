@@ -30,6 +30,6 @@
     "mysql": "^2.18.1",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
-    "sanitize-html": "^1.18.2"
+    "sanitize-html": "^2.3.2"
   }
 }
